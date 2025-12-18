@@ -184,6 +184,31 @@ button:disabled {
   align-items: center;
 }
 
+.timer-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.countdown {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  color: #0f172a;
+}
+
+.countdown-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6b7280;
+}
+
+.countdown-value {
+  font-size: 16px;
+  font-weight: 700;
+}
 .board-shell {
   display: flex;
   justify-content: center;

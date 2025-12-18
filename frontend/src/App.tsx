@@ -29,6 +29,11 @@ function App() {
   const [showHint, setShowHint] = useState(false)
   const [showHowTo, setShowHowTo] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [countdownMs, setCountdownMs] = useState<number>(() => {
+    const now = Date.now()
+    const next = Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate() + 1, 0, 0, 0)
+    return next - now
+  })
 
   useEffect(() => {
     setLoading(true)
@@ -104,6 +109,24 @@ function App() {
   }, [startTime, endTime])
 
   useEffect(() => {
+    const updateCountdown = () => {
+      const nowTs = Date.now()
+      const next = Date.UTC(
+        new Date().getUTCFullYear(),
+        new Date().getUTCMonth(),
+        new Date().getUTCDate() + 1,
+        0,
+        0,
+        0,
+      )
+      setCountdownMs(next - nowTs)
+    }
+    updateCountdown()
+    const id = window.setInterval(updateCountdown, 1000)
+    return () => window.clearInterval(id)
+  }, [])
+
+  useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (showHowTo || loading || inventoryList.length === 0) return
       const tag = (e.target as HTMLElement | null)?.tagName
@@ -128,6 +151,15 @@ function App() {
     const minutes = Math.floor(totalSeconds / 60)
     const seconds = totalSeconds % 60
     return `${minutes}:${seconds.toString().padStart(2, '0')}`
+  }
+
+  const formatCountdown = (ms: number) => {
+    const totalSeconds = Math.max(0, Math.floor(ms / 1000))
+    const hours = Math.floor(totalSeconds / 3600)
+    const minutes = Math.floor((totalSeconds % 3600) / 60)
+    const seconds = totalSeconds % 60
+    const pad = (n: number) => n.toString().padStart(2, '0')
+    return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
   }
 
   const boardSize = useMemo(
@@ -284,6 +316,13 @@ function App() {
 
   return (
     <div className="page">
+      <div className="timer-stack">
+        <div className="countdown">
+          <span className="countdown-label">Next daily</span>
+          <span className="countdown-value">{formatCountdown(countdownMs)}</span>
+        </div>
+      </div>
+
       <InventoryBar
         inventory={inventory}
         inventoryList={inventoryList}
@@ -300,8 +339,8 @@ function App() {
           <BoardSection
             boardStyle={boardStyle}
             pieces={pieces}
-          squareStyles={squareStyles}
-          parHit={parHit}
+            squareStyles={squareStyles}
+            parHit={parHit}
           onSquareClick={handleSquareClick}
           onHint={() => setShowHint(true)}
           onReset={() => setPlacements((prev) => prev.slice(0, -1))}
