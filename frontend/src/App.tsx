@@ -1,37 +1,19 @@
 import type { CSSProperties } from 'react'
-import { useEffect, useMemo, useState } from 'react'
-import { Chessboard, defaultPieces } from 'react-chessboard'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { PositionDataType } from 'react-chessboard'
-import { evaluateConflicts, findSolvableBoard, inventoryForSeed, makeDailySeed, solveWithInventory } from './engine'
-import type { Board, Inventory, PiecePlacement, PieceType } from './engine'
 import './App.css'
-
-const pieceToFen: Record<PieceType, string> = {
-  queen: 'wQ',
-  rook: 'wR',
-  bishop: 'wB',
-  knight: 'wN',
-  pawn: 'wP',
-  king: 'wK',
-}
-
-const TimerIcon = () => (
-  <svg
-    width="18"
-    height="18"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-  >
-    <circle cx="12" cy="12" r="8" />
-    <path d="M12 12V8" />
-    <path d="M12 12l3 2" />
-  </svg>
-)
+import { BoardSection } from './components/BoardSection'
+import { InventoryBar } from './components/InventoryBar'
+import { TimerDisplay } from './components/TimerDisplay'
+import {
+  evaluateConflicts,
+  findSolvableBoard,
+  inventoryForSeed,
+  makeDailySeed,
+  solveWithInventory,
+} from './engine'
+import type { Board, Inventory, PiecePlacement, PieceType } from './engine'
+import { pieceToFen } from './pieces'
 
 function App() {
   const initialSeed = makeDailySeed()
@@ -45,6 +27,7 @@ function App() {
   const [showModal, setShowModal] = useState(false)
   const [modalDismissed, setModalDismissed] = useState(false)
   const [showHint, setShowHint] = useState(false)
+  const [showHowTo, setShowHowTo] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -120,6 +103,25 @@ function App() {
     return () => window.clearInterval(id)
   }, [startTime, endTime])
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (showHowTo || loading || inventoryList.length === 0) return
+      const tag = (e.target as HTMLElement | null)?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return
+      const keys = ['a', 'A', 'ArrowLeft', 'd', 'D', 'ArrowRight']
+      if (!keys.includes(e.key)) return
+      e.preventDefault()
+      setSelected((prev) => {
+        const idx = inventoryList.indexOf(prev)
+        const delta = e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft' ? -1 : 1
+        const nextIndex = ((idx >= 0 ? idx : 0) + delta + inventoryList.length) % inventoryList.length
+        return inventoryList[nextIndex]
+      })
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [inventoryList, loading, showHowTo])
+
   const elapsedMs = startTime ? (endTime ?? now) - startTime : 0
   const formatTime = (ms: number) => {
     const totalSeconds = Math.max(0, Math.floor(ms / 1000))
@@ -145,12 +147,15 @@ function App() {
     [boardSize, parHit],
   )
 
-  const toSquare = (row: number, col: number) => {
-    if (!board) return ''
-    const file = String.fromCharCode(97 + col)
-    const rank = board.height - row
-    return `${file}${rank}`
-  }
+  const toSquare = useCallback(
+    (row: number, col: number) => {
+      if (!board) return ''
+      const file = String.fromCharCode(97 + col)
+      const rank = board.height - row
+      return `${file}${rank}`
+    },
+    [board],
+  )
 
   const pieces: PositionDataType = useMemo(() => {
     const map: PositionDataType = {}
@@ -166,7 +171,6 @@ function App() {
   const hintState = useMemo(() => {
     if (!showHint) return { wrong: null as string | null, suggest: null as string | null }
     if (hasConflicts) return { wrong: null, suggest: null }
-
     if (!board || !inventory) return { wrong: null, suggest: null }
 
     const solvedWithCurrent = solveWithInventory(board, inventory, placements)
@@ -249,17 +253,21 @@ function App() {
     })
   }
 
-  const handleUndo = () => {
-    setPlacements((prev) => prev.slice(0, -1))
+  const handleSquareClick = (square: string) => {
+    if (!board) return
+    const col = square.charCodeAt(0) - 97
+    const rank = Number(square[1])
+    const row = board.height - rank
+    togglePlacement(row, col)
   }
 
-  const handleReset = () => {
-    setPlacements([])
-    setStartTime(null)
-    setEndTime(null)
-    setShowHint(false)
-    setModalDismissed(false)
-  }
+  const hintMessage = showHint
+    ? hintState.wrong
+      ? 'Orange square marks a piece that cannot fit a solution.'
+      : hintState.suggest
+        ? 'Green square shows a needed placement.'
+        : 'All current pieces can fit a solution.'
+    : null
 
   if (loading || !board || !inventory) {
     return (
@@ -276,80 +284,32 @@ function App() {
 
   return (
     <div className="page">
-      <section className="controls">
-        <div className="inventory">
-          {inventoryList.map((type) => {
-            const remaining = remainingOf(type)
-            const total = inventory[type] ?? 0
-            const placed = placedCounts[type] ?? 0
-            return (
-              <button
-                key={type}
-                className={`piece-chip ${selected === type ? 'selected' : ''}`}
-                onClick={() => setSelected(type)}
-                aria-label={type}
-              >
-                <span className="piece-icon">
-                  {(() => {
-                    const Comp = defaultPieces[pieceToFen[type]]
-                    return <Comp svgStyle={{ width: 48, height: 48 }} />
-                  })()}
-                </span>
-                <span className={`count ${remaining <= 0 ? 'out' : ''}`}>{placed}/{total}</span>
-              </button>
-            )
-          })}
-        </div>
-      </section>
+      <InventoryBar
+        inventory={inventory}
+        inventoryList={inventoryList}
+        placedCounts={placedCounts}
+        selected={selected}
+        onSelect={setSelected}
+      />
 
       <section className="board-wrap">
-        <div className="timer-chip">
-          <TimerIcon />
-          <span>{formatTime(elapsedMs)}</span>
+        <div className="board-card">
+          <div className="board-card-header">
+            <TimerDisplay timeLabel={formatTime(elapsedMs)} />
+          </div>
+          <BoardSection
+            boardStyle={boardStyle}
+            pieces={pieces}
+          squareStyles={squareStyles}
+          parHit={parHit}
+          onSquareClick={handleSquareClick}
+          onHint={() => setShowHint(true)}
+          onReset={() => setPlacements((prev) => prev.slice(0, -1))}
+          canHint={placements.length > 0 && !hasConflicts}
+          canReset={placements.length > 0}
+          hintMessage={hintMessage}
+        />
         </div>
-        <div className={`board-shell ${parHit ? 'par' : ''}`}>
-          <Chessboard
-            options={{
-              id: 'daily-mix',
-              position: pieces,
-              allowDragging: false,
-              boardStyle: boardStyle,
-              squareStyles: squareStyles,
-              darkSquareStyle: { backgroundColor: '#b58863' },
-              lightSquareStyle: { backgroundColor: '#f0d9b5' },
-              onSquareClick: ({ square }) => {
-                const col = square.charCodeAt(0) - 97
-                const rank = Number(square[1])
-                const row = board.height - rank
-                togglePlacement(row, col)
-              },
-            }}
-          />
-        </div>
-        <div className="board-actions">
-          <button className="undo-btn" onClick={handleUndo} disabled={placements.length === 0}>
-            Undo
-          </button>
-          <button
-            className="hint-btn"
-            onClick={() => setShowHint(true)}
-            disabled={placements.length === 0 || hasConflicts}
-          >
-            Hint
-          </button>
-          <button className="reset-btn" onClick={handleReset} disabled={placements.length === 0}>
-            Reset
-          </button>
-        </div>
-        {showHint && (
-          <p className="hint-inline">
-            {hintState.wrong
-              ? 'Orange square marks a piece that cannot fit a solution.'
-              : hintState.suggest
-                ? 'Green square shows a needed placement.'
-                : 'All current pieces can fit a solution.'}
-          </p>
-        )}
       </section>
 
       {showModal && (
@@ -365,6 +325,21 @@ function App() {
             >
               Close
             </button>
+          </div>
+        </div>
+      )}
+
+      {showHowTo && (
+        <div className="modal-overlay" role="dialog" aria-label="How to play">
+          <div className="modal">
+            <h2>How to play</h2>
+            <ul className="howto-list">
+              <li>Select a piece from the top bar, then tap a valid square to place it.</li>
+              <li>Pieces follow normal chess attacks. Blocked squares stop sliding pieces and can’t hold pieces.</li>
+              <li>You must place all given pieces so none attack each other.</li>
+              <li>Use Hint to spot one incorrect piece or a needed square; Undo/Reset to adjust.</li>
+            </ul>
+            <button onClick={() => setShowHowTo(false)}>Close</button>
           </div>
         </div>
       )}

@@ -111,6 +111,19 @@ button:disabled {
   color: #ef4444;
 }
 
+.control-actions {
+  margin-top: 8px;
+}
+
+.secondary-btn {
+  padding: 8px 14px;
+  background: #f8fafc;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  color: #0f172a;
+  font-weight: 600;
+}
+
 .scorecard {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -152,10 +165,36 @@ button:disabled {
   gap: 6px;
 }
 
+.board-card {
+  width: 100%;
+  max-width: 560px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 6px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.board-card-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.board-shell {
+  display: flex;
+  justify-content: center;
+}
+
 .board-actions {
   display: flex;
-  gap: 8px;
-  margin-top: 6px;
+  gap: 16px;
+  margin-top: 0px;
+  justify-content: center;
+  width: 100%;
 }
 
 .board-shell.par {
@@ -177,17 +216,22 @@ button:disabled {
   padding: 8px 14px;
 }
 
-.timer-chip {
+.wide {
+  flex: 1 1 0;
+  max-width: 240px;
+}
+
+.timer-inline {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
-  background: #ffffff;
+  font-size: 14px;
   color: #0f172a;
-  border: 1px solid #e5e7eb;
-  border-radius: 999px;
-  padding: 6px 10px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+}
+
+.timer-text {
+  font-size: 18px;
+  font-weight: 700;
 }
 
 .hint-inline {
@@ -216,6 +260,14 @@ button:disabled {
   width: 100%;
   text-align: center;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.16);
+}
+
+.howto-list {
+  text-align: left;
+  color: #0f172a;
+  padding-left: 20px;
+  margin: 12px 0 16px;
+  line-height: 1.5;
 }
 
 @keyframes board-bounce {
