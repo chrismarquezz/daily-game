@@ -106,6 +106,10 @@ button:disabled {
   font-weight: 700;
 }
 
+.piece-chip .count.done {
+  color: #16a34a;
+}
+
 .piece-chip .count.out {
   font-size: 12px;
   color: #ef4444;
@@ -163,6 +167,7 @@ button:disabled {
   flex-direction: column;
   align-items: center;
   gap: 6px;
+  position: relative;
 }
 
 .board-card {
@@ -216,8 +221,8 @@ button:disabled {
 
 .board-actions {
   display: flex;
-  gap: 16px;
-  margin-top: 0px;
+  gap: 12px;
+  margin-top: -7px;
   justify-content: center;
   width: 100%;
 }
@@ -244,6 +249,13 @@ button:disabled {
 .wide {
   flex: 1 1 0;
   max-width: 240px;
+}
+
+.clear-btn {
+  position: absolute;
+  top: 8px;
+  right: 24px;
+  padding: 8px 14px;
 }
 
 .timer-inline {

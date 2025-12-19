@@ -27,6 +27,7 @@ export function InventoryBar({
           const total = inventory[type] ?? 0
           const placed = placedCounts[type] ?? 0
           const Comp = defaultPieces[pieceToFen[type]]
+          const done = placed >= total && total > 0
           return (
             <button
               key={type}
@@ -37,7 +38,9 @@ export function InventoryBar({
               <span className="piece-icon">
                 <Comp svgStyle={{ width: 48, height: 48 }} />
               </span>
-              <span className={`count ${remaining <= 0 ? 'out' : ''}`}>{placed}/{total}</span>
+              <span className={`count ${done ? 'done' : remaining <= 0 ? 'out' : ''}`}>
+                {placed}/{total}
+              </span>
             </button>
           )
         })}

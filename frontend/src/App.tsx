@@ -344,11 +344,22 @@ function App() {
           onSquareClick={handleSquareClick}
           onHint={() => setShowHint(true)}
           onReset={() => setPlacements((prev) => prev.slice(0, -1))}
-          canHint={placements.length > 0 && !hasConflicts}
-          canReset={placements.length > 0}
-          hintMessage={hintMessage}
-        />
+            canHint={placements.length > 0 && !hasConflicts}
+            canReset={placements.length > 0}
+            hintMessage={hintMessage}
+          />
         </div>
+        <button
+          className="clear-btn"
+          onClick={() => {
+            setPlacements([])
+            setShowHint(false)
+            setModalDismissed(false)
+          }}
+          disabled={placements.length === 0}
+        >
+          Clear
+        </button>
       </section>
 
       {showModal && (
