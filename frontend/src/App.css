@@ -162,6 +162,7 @@ button:disabled {
   color: #6b7280;
 }
 
+
 .board-wrap {
   display: flex;
   flex-direction: column;

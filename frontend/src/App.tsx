@@ -6,6 +6,7 @@ import { BoardSection } from './components/BoardSection'
 import { InventoryBar } from './components/InventoryBar'
 import { TimerDisplay } from './components/TimerDisplay'
 import {
+  DEFAULT_BLOCK_RATIO_VALUE,
   evaluateConflicts,
   findSolvableBoard,
   inventoryForSeed,
@@ -38,10 +39,20 @@ function App() {
   useEffect(() => {
     setLoading(true)
     const inv = inventoryForSeed(initialSeed)
-    const { board: solvableBoard } = findSolvableBoard(initialSeed, inv)
+    const { board: solvableBoard } = findSolvableBoard(
+      initialSeed,
+      inv,
+      80,
+      DEFAULT_BLOCK_RATIO_VALUE,
+    )
     setInventory(inv)
     setBoard(solvableBoard)
     setSelected((Object.keys(inv) as PieceType[])[0])
+    setPlacements([])
+    setStartTime(null)
+    setEndTime(null)
+    setShowHint(false)
+    setModalDismissed(false)
     setLoading(false)
   }, [initialSeed])
 
@@ -293,13 +304,7 @@ function App() {
     togglePlacement(row, col)
   }
 
-  const hintMessage = showHint
-    ? hintState.wrong
-      ? 'Orange square marks a piece that cannot fit a solution.'
-      : hintState.suggest
-        ? 'Green square shows a needed placement.'
-        : 'All current pieces can fit a solution.'
-    : null
+  const hintMessage = null
 
   if (loading || !board || !inventory) {
     return (
@@ -341,10 +346,10 @@ function App() {
             pieces={pieces}
             squareStyles={squareStyles}
             parHit={parHit}
-          onSquareClick={handleSquareClick}
-          onHint={() => setShowHint(true)}
-          onReset={() => setPlacements((prev) => prev.slice(0, -1))}
-            canHint={placements.length > 0 && !hasConflicts}
+            onSquareClick={handleSquareClick}
+            onHint={() => setShowHint(true)}
+            onReset={() => setPlacements((prev) => prev.slice(0, -1))}
+            canHint={false}
             canReset={placements.length > 0}
             hintMessage={hintMessage}
           />

@@ -56,7 +56,7 @@ function mulberry32(a: number): () => number {
   }
 }
 
-export function generateBoard(seed: string, size = DEFAULT_SIZE): Board {
+export function generateBoard(seed: string, size = DEFAULT_SIZE, blockRatio = DEFAULT_BLOCK_RATIO): Board {
   const rng = mulberry32(hashSeed(seed))
   const cells: CellState[][] = []
   let validCount = 0
@@ -65,7 +65,7 @@ export function generateBoard(seed: string, size = DEFAULT_SIZE): Board {
   for (let row = 0; row < size; row++) {
     const rowCells: CellState[] = []
     for (let col = 0; col < size; col++) {
-      const cell: CellState = rng() < DEFAULT_BLOCK_RATIO ? 'blocked' : 'valid'
+      const cell: CellState = rng() < blockRatio ? 'blocked' : 'valid'
       rowCells.push(cell)
       if (cell === 'valid') validCount++
     }
@@ -274,26 +274,27 @@ export function findSolvableBoard(
   baseSeed: string,
   inventory: Inventory,
   maxAttempts = 80,
+  blockRatio = DEFAULT_BLOCK_RATIO,
 ): { board: Board; solution: PiecePlacement[] | null } {
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const attemptSeed = attempt === 0 ? baseSeed : `${baseSeed}-${attempt}`
-    const board = generateBoard(attemptSeed)
+    const board = generateBoard(attemptSeed, DEFAULT_SIZE, blockRatio)
     const solution = solveWithInventory(board, inventory)
     if (solution) return { board, solution }
   }
-  const board = generateBoard(baseSeed)
+  const board = generateBoard(baseSeed, DEFAULT_SIZE, blockRatio)
   return { board, solution: null }
 }
 
-export function inventoryForSeed(seed: string): Inventory {
-  const rng = mulberry32(hashSeed(seed))
-  const roll = (min: number, max: number) => Math.floor(rng() * (max - min + 1)) + min
+export function inventoryForSeed(_seed: string): Inventory {
   return {
-    queen: roll(1, 2),
-    rook: roll(3, 4),
-    bishop: roll(2, 3),
-    knight: roll(2, 3),
-    pawn: roll(4, 6),
+    queen: 1,
+    rook: 3,
+    bishop: 2,
+    knight: 2,
+    pawn: 4,
     king: 1,
   }
 }
+
+export const DEFAULT_BLOCK_RATIO_VALUE = DEFAULT_BLOCK_RATIO
